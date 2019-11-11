@@ -4,7 +4,7 @@ A fast, lightweight and flexible schema-based verifier and sanitizer. The goal o
 # 📝 Project Goals
 - Works across Node and Browser
 - Simple implementation (No behind the scenes magic)
-- Lightweight <-- <5kb gzipped
+- Lightweight <5kb gzipped
 - Fast
 - Minimal nesting and boilerplate
 - Testable
