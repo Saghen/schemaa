@@ -33,13 +33,6 @@ Although useful in some situations, the complexity of JSON schemas often makes t
 ### Reimplementing Language Features
 Many validation libraries attempt to form their own methods of schema creation for a more "surgary" syntax. For an example of this, one needs to look no further than Joi. However, this ends up forcing the developer to learn a larger API for the sake of reimplementing features that already exist in a language. Instead, `schemaa` will stay true to using objects and native types to reduce the size of the API.
 
-Goals
-Unopionated
-Useful errors
-Similar API
-Custom Types
-Pre-compilation
-
 # How?
 ## Errors
 Inherits from `Error`. Inspired by `superstruct` and `Joi`.
@@ -51,9 +44,9 @@ Inherits from `Error`. Inspired by `superstruct` and `Joi`.
     {
       path: String[], // Array of keys leading up the inheritance chain
       key: String, // Key of the object that failed
-      value: "any", // The value that failed the validation, any type
+      value: Any, // The value that failed the validation, any type
       message: "", // Generated message containing information on the error
-      type: "any" // The type of the expected value
+      type: Any // The type of the expected value
     }
   ]
 }
