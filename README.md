@@ -25,6 +25,7 @@ Almost all current validators provide no way to convert to different libraries a
 
 ### Performance
 ⚠️ Place benchmarks here
+
 In comparison to AJV, a library which pre-compiles its schemas, libraries that do not pre-compile their schemas fail to compete in terms of performance. AJV is approximately 50x faster than Joi as a result.
 
 ### JSON Schemas
