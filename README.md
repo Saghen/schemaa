@@ -23,15 +23,22 @@ Many validators ship with built-in types like emails, URLs, UUIDs, etc. with no 
 ### Non-reusable
 Almost all current validators provide no way to convert to different libraries at runtime such as Mongoose, Sequelize, Joi, and more. This lack of extensibility makes schemas far harder to reuse and forces developers to rewrite the same schema over many different specifications.
 
-## Performance
+### Performance
 ⚠️ Place benchmarks here
 In comparison to AJV, a library which pre-compiles its schemas, libraries that do not pre-compile their schemas fail to compete in terms of performance. AJV is approximately 50x faster than Joi as a result.
 
-## JSON Schemas
+### JSON Schemas
 Although useful in some situations, the complexity of JSON schemas often makes them less appealing and more difficult to write in. Thus, the disadvantages generally end up being more significant than the advantages.
 
-## Reimplementing Language Features
+### Reimplementing Language Features
 Many validation libraries attempt to form their own methods of schema creation for a more "surgary" syntax. For an example of this, one needs to look no further than Joi. However, this ends up forcing the developer to learn a larger API for the sake of reimplementing features that already exist in a language. Instead, `schemaa` will stay true to using objects and native types to reduce the size of the API.
+
+Goals
+Unopionated
+Useful errors
+Similar API
+Custom Types
+Pre-compilation
 
 # How?
 ## Errors
