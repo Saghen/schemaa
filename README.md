@@ -13,6 +13,9 @@ A fast, lightweight and flexible schema-based verifier and sanitizer. The goal o
 The developers using the library should be able to write one extensible and simple schema that can be converted to Mongoose while also being able to validate incoming requests, form data, and any other form of data. Similar to `react`, the library should be close to JS where, instead of reimplementing JS features, the library should provide a small footprint and be easily customizable. An example of what I mean by this would be [raviger](https://github.com/kyeotic/raviger) versus something like [vue-router](https://github.com/vuejs/vue-router). Raviger doesn't implement `beforeRoute`, `beforeEach`, etc. Instead, you can simply put your code before the return statement. Thus, this reduces the complexity of the library while improving performance and making it more flexible.
 
 ## The Current Solutions
+### Heavy
+Validators such as Joi (29.6kb), AJV (28.6kb), yup (21.6kb) are heavy. In a world where page load time can dramatically affect user retention, validation libraries must be lightweight and fast.
+
 ### No Errors
 Some solutions decide to not throws any errors at all. This makes writing clean code, especially with async/await becoming more popular, far more diffuclt.
 
@@ -35,6 +38,10 @@ Although useful in some situations, the complexity of JSON schemas often makes t
 Many validation libraries attempt to form their own methods of schema creation for a more "surgary" syntax. For an example of this, one needs to look no further than Joi. However, this ends up forcing the developer to learn a larger API for the sake of reimplementing features that already exist in a language. Instead, `schemaa` will stay true to using objects and native types to reduce the size of the API.
 
 # How?
+## Types
+Types in `schemaa` are based on 
+
+
 ## Errors
 Inherits from `Error`. Inspired by `superstruct` and `Joi`.
 ```js
@@ -46,7 +53,7 @@ Inherits from `Error`. Inspired by `superstruct` and `Joi`.
       path: String[], // Array of keys leading up the inheritance chain
       key: String, // Key of the object that failed
       value: Any, // The value that failed the validation, any type
-      message: "", // Generated message containing information on the error
+      message: String, // Generated message containing information on the error
       type: Any // The type of the expected value
     }
   ]
