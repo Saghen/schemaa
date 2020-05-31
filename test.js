@@ -1,5 +1,5 @@
-const Validator = require('./index')
-const { string, boolean, number, bigInt, func } = require('./types')
+const Validator = require('./src/index')
+const { string, boolean, number, bigInt, func } = require('./src/types')
 
 const data = {
   hello: 'holy',
