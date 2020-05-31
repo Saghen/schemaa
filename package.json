@@ -4,7 +4,7 @@
   "description": "A fast, lightweight and flexible schema-based verifier and sanitizer. The goal of the project is to provide a schema that can be used widely across SQL and NoSQL databases, incoming requests, outgoing requests, and more.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test.js"
   },
   "repository": {
     "type": "git",
@@ -18,9 +18,9 @@
   },
   "homepage": "https://github.com/Saghen/schemaa#readme",
   "dependencies": {
-    "superstruct": "^0.8.3"
   },
   "devDependencies": {
-    "ajv": "^6.12.2"
+    "ajv": "^6.12.2",
+    "superstruct": "^0.8.3"
   }
 }
