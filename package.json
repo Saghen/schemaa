@@ -1,8 +1,8 @@
 {
-  "name": "schemaa",
-  "version": "1.0.0",
+  "name": "@schema/core",
+  "version": "0.0.1-rc2",
   "description": "A fast, lightweight and flexible schema-based verifier and sanitizer. The goal of the project is to provide a schema that can be used widely across SQL and NoSQL databases, incoming requests, outgoing requests, and more.",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "node test.js"
   },
@@ -10,17 +10,20 @@
     "type": "git",
     "url": "git+https://github.com/Saghen/schemaa.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "Schema",
+    "Validation"
+  ],
+  "author": "Liam Dyer",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Saghen/schemaa/issues"
   },
   "homepage": "https://github.com/Saghen/schemaa#readme",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "ajv": "^6.12.2",
-    "superstruct": "^0.8.3"
+    "superstruct": "^0.8.3",
+    "typescript": "^3.9.5"
   }
 }
