@@ -1,0 +1,6 @@
+export const Keys = Symbol('Keys')
+export const Type = Symbol('Type')
+export const PropertyName = Symbol('PropertyName')
+export const TypeName = Symbol('TypeName')
+export const Validators = Symbol('Validators')
+export const Sanitizers = Symbol('Sanitizers')
