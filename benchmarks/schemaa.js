@@ -1,29 +1,66 @@
-const Validator = require('../src/index')
-const { string, boolean, number, bigInt, func } = require('../src/types')
+const { Validator, string, boolean, number, bigInt, func } = require('../src/index')
+const config = require('./config')
+const { runFunctionManyTimes } = require('./helpers')
 
-const data = {
-  hello: 'holy',
-  ja: 123,
-  array: new Array(1000).fill({ foo: '123' }),
-  another: 123,
-}
+const { array, arraySimple, deepObject, generateDeepObject, shallowObject, generateShallowObject, largeObject } = require('./data')
 
-const validator = new Validator({
-  hello: string,
-  ja: number,
-  array: [{ foo: { type: string, length: 3 } }],
-  another: string,
+// Shallow Object
+const validatorShallowObject = new Validator(generateShallowObject(config.shallowObject.count, number))
+
+runFunctionManyTimes(config.runCount, () => {
+  validatorShallowObject.validate(shallowObject)
 })
 
-new Array(100).fill(0).forEach(() => {
-  try {
-    validator.validate(data)
-  } catch (err) {}
+console.time('schemaa - shallow object')
+validatorShallowObject.validate(shallowObject)
+console.timeEnd('schemaa - shallow object')
+
+// Deep Object
+const validatorDeepObject = new Validator(generateDeepObject(config.deepObject.levels))
+
+runFunctionManyTimes(config.runCount, () => {
+  validatorDeepObject.validate(deepObject)
 })
 
-console.time('schemaa')
-try {
-  validator.validate(data)
-} catch (err) {}
+console.time('schemaa - deep object')
+validatorDeepObject.validate(deepObject)
+console.timeEnd('schemaa - deep object')
 
-console.timeEnd('schemaa')
+// Large Object
+const validatorLargeObject = new Validator(
+  generateShallowObject(config.largeObject.count, generateDeepObject(config.largeObject.levels))
+)
+
+runFunctionManyTimes(config.runCount, () => {
+  validatorLargeObject.validate(largeObject)
+})
+
+console.time('schemaa - large object')
+validatorLargeObject.validate(largeObject)
+console.timeEnd('schemaa - large object')
+
+// Array
+const validatorArray = new Validator({
+  array: [{ foo: { type: string } }],
+})
+
+runFunctionManyTimes(config.runCount, () => {
+  validatorArray.validate(array)
+})
+
+console.time('schemaa - array')
+validatorArray.validate(array)
+console.timeEnd('schemaa - array')
+
+// Array Simple
+const validatorArraySimple = new Validator({
+  array: [string],
+})
+
+runFunctionManyTimes(config.runCount, () => {
+  validatorArraySimple.validate(arraySimple)
+})
+
+console.time('schemaa - array simple')
+validatorArraySimple.validate(arraySimple)
+console.timeEnd('schemaa - array simple')

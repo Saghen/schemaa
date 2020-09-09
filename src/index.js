@@ -1,36 +1,60 @@
 const { ValidationError, REASONS } = require('./errors')
-const { string, boolean, number, bigInt, func, allTypeOptions } = require('./types')
+const { typeDefinitions, typeOptions } = require('./types')
 const { createFailure, wrapIfLiteral } = require('./helpers')
 
-const reservedKeywords = ['type', 'middleware', 'name']
-const types = [string, boolean, number, bigInt, func]
+const reservedKeywords = ['type', 'middleware', 'name', 'required']
+const types = Object.values(typeDefinitions)
+
+function getAllTypeOptions(type) {
+  // Handle arrays and nested objects
+  if (Array.isArray(type)) type = typeDefinitions.array
+  else if (type instanceof Validator) type = typeDefinitions.object
+
+  let previousType = type
+  let currentType = type
+  let propertyTypeOptions = typeOptions[type.name]
+  while (currentType.extends) {
+    currentType = types.find((type) => type.name === currentType.extends)
+    if (!currentType)
+      throw new Error(
+        `The type ${previousType.name} requested ${previousType.extends} but the type does not exist`
+      )
+    propertyTypeOptions = { ...typeOptions[currentType.name], ...propertyTypeOptions }
+    previousType = currentType
+  }
+  return propertyTypeOptions
+}
 
 function parseOptions(propertySchema) {
   const middleware = []
-  const requires = new Set()
-  // TODO: Function to handle this
-  const typeOptions = allTypeOptions[propertySchema.type.extends]
-  const schemaOptions = Object.keys(propertySchema).filter((key) => !reservedKeywords.includes(key))
-  for (const key of schemaOptions) {
-    const typeOption = typeOptions[key]
+  const dependsOn = new Set()
+
+  const propertyTypeOptions = getAllTypeOptions(propertySchema.type)
+  const propertyOptions = Object.keys(propertySchema).filter(
+    (key) => !reservedKeywords.includes(key)
+  )
+
+  for (const key of propertyOptions) {
+    const typeOption = propertyTypeOptions[key]
     if (!typeOption)
       throw new Error(`The provided option ${key} was not found on the key ${propertySchema.name}`)
 
     // Consistently make all options a function
+    // FIXME: We've abstracted this away so it's no longer necessary
     propertySchema[key] = wrapIfLiteral(propertySchema[key])
 
-    if (!Array.isArray(typeOption.requires)) typeOption.requires = [key]
-    for (const requiredKey of typeOption.requires) {
-      if (!schemaOptions[requiredKey])
+    if (!Array.isArray(typeOption.dependsOn)) typeOption.dependsOn = [key]
+    for (const dependsOnKey of typeOption.dependsOn) {
+      if (!propertyOptions.includes(dependsOnKey))
         throw new Error(
-          `The option ${key} requires the option ${requiredKey} to be defined as well`
+          `The option ${key} depends on the option ${dependsOnKey} to be defined as well`
         )
 
-      requires.add(requiredKey)
+      dependsOn.add(dependsOnKey)
     }
     middleware.push(typeOption)
   }
-  return { middleware, requires: Array.from(requires) }
+  return { middleware, dependsOn: Array.from(dependsOn) }
 }
 
 function compileSchema(schema) {
@@ -40,9 +64,11 @@ function compileSchema(schema) {
     if (!types.includes(propertySchema.type) && !(propertySchema.type instanceof Validator))
       propertySchema = { type: schema }
 
-    const { middleware, requires } = parseOptions(propertySchema)
+    if (typeof propertySchema.type !== 'object') throw new Error('The type must be an object')
+
+    const { middleware, dependsOn } = parseOptions(propertySchema)
     propertySchema._middleware = middleware
-    propertySchema._requires = requires
+    propertySchema._dependsOn = dependsOn
     propertySchema.name = propertySchema.name || 'Property'
 
     if (Array.isArray(propertySchema.type)) {
@@ -69,9 +95,9 @@ function compileSchema(schema) {
 
     if (isNested) propertySchema.type = new Validator(value)
 
-    const { middleware, requires } = parseOptions(propertySchema)
+    const { middleware, dependsOn } = parseOptions(propertySchema)
     propertySchema._middleware = middleware
-    propertySchema._requires = requires
+    propertySchema._dependsOn = dependsOn
     propertySchema.name = propertySchema.name || key
 
     if (isArray) {
@@ -123,7 +149,7 @@ class Validator {
   validateProperty(key, property, toValidate, obj, fullObj) {
     const failures = []
 
-    const isRequired = property.required?.() ?? this.strict
+    const isRequired = (typeof property.required === 'function' ? property.required() : property.required) ?? this.strict
     const isArray = Array.isArray(property.type)
     const isNested = property.type instanceof Validator
 
@@ -176,6 +202,7 @@ class Validator {
         try {
           property.type[0].type.validate(toValidate[i], fullObj)
         } catch (err) {
+          if (!(err instanceof ValidationError)) throw err
           for (const failure of err.failures) {
             failure.index = i
             if (failure.path) failure.path.push(key)
@@ -186,13 +213,30 @@ class Validator {
       }
     }
 
+    // Handle regular types
+    else if (!property.type.validate.bind(fullObj)(toValidate, obj)) {
+      // Type was invalid so we return the failure
+      failures.push(
+        createFailure({
+          key,
+          value: toValidate,
+          message: `${property.name} must be of type ${property.type.name}`,
+          reason: REASONS.INVALID_TYPE,
+        })
+      )
+    }
+
     // Type is valid so we run the middleware
-    else if (property.type.validate.bind(fullObj)(toValidate, obj)) {
+    if (failures.length === 0) {
       if (property._middleware.length === 0) return failures
-      const propertyClone = { ...property }
+      const propertyClone = {
+        ...property,
+      }
       // Get all required values
-      for (const requiredKey of property._requires)
-        propertyClone[requiredKey] = property[requiredKey](toValidate, obj, { fullObj })
+      for (const dependsOnKey of property._dependsOn)
+        propertyClone[dependsOnKey] = property[dependsOnKey](toValidate, obj, {
+          fullObj,
+        })
 
       // Loop through middleware
       for (let i = 0; i < property._middleware.length; i++) {
@@ -210,7 +254,6 @@ class Validator {
         const message =
           property._middleware[i].message?.(...middlewareArgs) ?? `${property.name} is invalid`
         const reason = property._middleware[i].reason?.(...middlewareArgs) ?? REASONS.INVALID
-        // TODO: Get reason enum
         failures.push(
           createFailure({
             key,
@@ -222,19 +265,8 @@ class Validator {
       }
     }
 
-    // Type was invalid so we return the failure
-    else
-      failures.push(
-        createFailure({
-          key,
-          value: toValidate,
-          message: `${property.name} must be of type ${property.type.name}`,
-          reason: REASONS.INVALID_TYPE,
-        })
-      )
-
     return failures
   }
 }
 
-module.exports = Validator
+module.exports = { Validator, ...typeDefinitions }

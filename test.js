@@ -1,8 +1,7 @@
-const Validator = require('./src/index')
-const { string, boolean, number, bigInt, func } = require('./src/types')
+const { Validator, string, boolean, number, bigInt, func } = require('./src/index')
 
 const data = {
-  hello: 'holy',
+  hello: 'holyaa',
   ja: 123,
   array: new Array(1000).fill({ foo: '123' }),
   another: '123',
@@ -11,32 +10,30 @@ const data = {
 const validator = new Validator({
   hello: {
     type: string,
-    length: 6
+    minLength: 6
   },
   ja: number,
   array: [{ foo: string }],
   another: string,
 })
 
+console.log(validator.compiledSchema)
 validator.validate(data)
 
 const validatorDeep = new Validator({
-  hello: string,
   nested: { whatthefuck: string, innerArray: [string] },
-  type: { type: string },
 })
 validatorDeep.validate({
-  hello: '12',
-  nested: { whatthefuck: 'hello', innerArray: [''] },
-  type: 'ja',
+  nested: { whatthefuck: 'hello', innerArray: [''] }
 })
+console.log(validatorDeep)
 
-const validatorShallow = new Validator(string)
+/*const validatorShallow = new Validator(string)
 validatorShallow.validate('h')
 
 const validatorShallow2 = new Validator({ type: string, length: 5 }, { name: 'Name' })
 console.log(validatorShallow2)
-validatorShallow2.validate('12')
+validatorShallow2.validate('12345')
 
 console.time()
 const aBigBoi = new Validator({
@@ -51,4 +48,4 @@ const aBigBoi = new Validator({
     type: boolean
   }
 })
-console.timeEnd()
+console.timeEnd()*/
