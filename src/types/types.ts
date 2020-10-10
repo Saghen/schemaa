@@ -1,6 +1,7 @@
-import { ValidationFailure } from '../errors'
+import { CompilationError, ValidationFailure } from '../errors'
 import { ICompiledProperty, ICompiledOptions } from '../compiler/compiler'
 import { RequireOnlyOne } from '../utility-types'
+import { IsType, IsGenerativeType } from '../symbols'
 
 export type validationFunctionType = (
   prop: any,
@@ -19,6 +20,8 @@ export interface IType {
   validate: validationFunctionType
   name: String
   extends?: String
+  [IsType]: true
+  [IsGenerativeType]?: boolean
 }
 
 export interface ITypes {
@@ -29,37 +32,55 @@ export const defaultTypes: ITypes = {
   any: {
     validate: () => true,
     name: 'any',
+    [IsType]: true,
   },
   string: {
     validate: (prop) => typeof prop === 'string' || prop instanceof String,
     name: 'string',
     extends: 'any',
+    [IsType]: true,
   },
   boolean: {
     validate: (prop) => typeof prop === 'boolean' || prop instanceof Boolean,
     name: 'boolean',
     extends: 'any',
+    [IsType]: true,
   },
   number: {
     validate: (prop) => typeof prop === 'number' || prop instanceof Number,
     name: 'number',
     extends: 'any',
+    [IsType]: true,
   },
   function: {
     validate: (prop) => typeof prop === 'function',
     name: 'function',
     extends: 'any',
-  },
-  array: {
-    validate: (prop) => Array.isArray(prop),
-    name: 'array',
-    extends: 'any',
+    [IsType]: true,
   },
   object: {
     validate: (prop) => typeof prop === 'object' && prop !== null,
     name: 'object',
     extends: 'any',
+    [IsType]: true,
   },
+}
+
+// Generative Types
+export type generativeTypeFunction = (...args) => IType
+
+export interface IGenerativeTypeFunctions {
+  [key: string]: generativeTypeFunction
+}
+
+export const defaultGenerativeTypeFunctions: IGenerativeTypeFunctions = {
+  array: (innerType) => ({
+    validate: (prop) => Array.isArray(prop) && prop.every((value) => innerType.validate(value)),
+    name: 'array',
+    extends: 'any',
+    [IsType]: true,
+    [IsGenerativeType]: true
+  }),
 }
 
 // Options

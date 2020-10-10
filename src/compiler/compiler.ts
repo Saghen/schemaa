@@ -5,7 +5,7 @@ import {
   sanitizationFunctionType,
   defaultTypes,
 } from '../types/types'
-import { Keys, Sanitizers, PropertyName, Type, Validators } from '../symbols'
+import { Keys, Sanitizers, PropertyName, Type, Validators, IsShallow } from '../symbols'
 import { Schema } from '../index'
 
 import { getType, isType } from '../types/helpers'
@@ -19,12 +19,14 @@ export interface IUserSchema {
 
 // Transpiled
 
+export interface ITranspiledOptions {
+  [key: string]: any
+}
+
 export interface ITranspiledProperty {
   propertyName: string
   type: IType | [IType] | ITranspiledSchema
-  options: {
-    [key: string]: boolean | string
-  }
+  options: ITranspiledOptions
 }
 
 export interface ITranspiledSchema {
@@ -32,7 +34,12 @@ export interface ITranspiledSchema {
 }
 
 function transpileSchema(userSchema: IUserSchema): ITranspiledSchema {
+  const transpiledSchema: ITranspiledSchema = {}
 
+  for (const [key, value] of Object.entries(userSchema))
+    transpiledSchema[key] = transpileProperty(key, value)
+
+  return transpiledSchema
 }
 
 function transpileProperty(key: string, property: any): ITranspiledProperty {
@@ -52,21 +59,27 @@ function transpileProperty(key: string, property: any): ITranspiledProperty {
 
 // Compiled
 
+export interface ICompiledValidators {
+  [Keys]: string[]
+  [key: string]: validationFunctionType
+}
+
+export interface ICompiledSanitizers {
+  [Keys]: string[]
+  [key: string]: sanitizationFunctionType
+}
+
+export interface ICompiledOptions {
+  [Keys]: string[]
+  [key: string]: any
+}
+
 export interface ICompiledProperty {
   propertyName: string
   type: IType | Schema
-  options: {
-    [Keys]: string[]
-    [key: string]: boolean | string
-  }
-  validators: {
-    [Keys]: string[]
-    [key: string]: validationFunctionType
-  }
-  sanitizers: {
-    [Keys]: string[]
-    [key: string]: sanitizationFunctionType
-  }
+  options: ICompiledOptions
+  validators: ICompiledValidators
+  sanitizers: ICompiledSanitizers
 }
 
 export interface ICompiledSchema {
@@ -75,3 +88,5 @@ export interface ICompiledSchema {
 }
 
 function compileSchema(schema: IUserSchema): ICompiledSchema {}
+
+function compileProperty(key: string, property: ITranspiledProperty): ICompiledProperty {}

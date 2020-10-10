@@ -1,8 +1,6 @@
 import { ICompiledProperty } from './compiler/compiler'
 import { Keys } from './symbols'
 
-
-
 export class Schema {
   compiledSchema: CompiledSchema = {
     [Keys]: []
