@@ -1,4 +1,4 @@
-import { CompilationError, ValidationFailure } from '../errors'
+import { CompilationError, FAILURE_REASONS, ValidationError, ValidationFailure } from '../errors'
 import { ICompiledProperty, ICompiledOptions } from '../compiler/compiler'
 import { RequireOnlyOne } from '../utility-types'
 import { IsType, IsGenerativeType } from '../symbols'
@@ -17,9 +17,9 @@ export type sanitizationFunctionType = <T>(
 
 // Types
 export interface IType {
-  validate: validationFunctionType
-  name: String
-  extends?: String
+  validate: (prop: any) => boolean | ValidationFailure
+  name: string
+  extends?: string
   [IsType]: true
   [IsGenerativeType]?: boolean
 }
@@ -74,12 +74,35 @@ export interface IGenerativeTypeFunctions {
 }
 
 export const defaultGenerativeTypeFunctions: IGenerativeTypeFunctions = {
-  array: (innerType) => ({
-    validate: (prop) => Array.isArray(prop) && prop.every((value) => innerType.validate(value)),
+  array: (innerType: IType) => ({
+    validate: (prop) => {
+      if (!Array.isArray(prop)) return false
+      for (let i = 0; i < prop.length; i++) {
+        try {
+          if (innerType.validate(prop[i])) continue
+          throw new ValidationFailure({
+            value: prop[i],
+            message: `Value at index ${i} is not of type ${innerType.name}`,
+            index: i,
+            path: [],
+            reason: FAILURE_REASONS.INVALID_TYPE,
+          })
+        } catch (err) {
+          if (err instanceof ValidationFailure) err.index = i
+          if (err instanceof ValidationError)
+            err.failures = err.failures.map((failure) => {
+              failure.index = i
+              return failure
+            })
+          throw err
+        }
+      }
+      return true
+    },
     name: 'array',
     extends: 'any',
     [IsType]: true,
-    [IsGenerativeType]: true
+    [IsGenerativeType]: true,
   }),
 }
 

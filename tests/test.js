@@ -1,32 +1,38 @@
-const { Validator, string, boolean, number, bigInt, func } = require('./src/index')
+const { Schema } = require('../dist')
 
 const data = {
-  hello: 'holyaa',
+  hello: 'holy123',
   ja: 123,
-  array: new Array(1000).fill({ foo: '123' }),
+  array: new Array(1000).fill("123"),
   another: '123',
+  nested: {
+    values: 'pogchamp'
+  }
 }
 
-const validator = new Validator({
+const validator = new Schema({
   hello: {
-    type: string,
+    type: String,
     minLength: 6
   },
-  ja: number,
-  array: [{ foo: string }],
-  another: string,
+  ja: Number,
+  array: [String],
+  another: String,
+  nested: {
+    values: Number
+  }
 })
 
 console.log(validator.compiledSchema)
 validator.validate(data)
 
-const validatorDeep = new Validator({
+/*const validatorDeep = new Validator({
   nested: { whatthefuck: string, innerArray: [string] },
 })
 validatorDeep.validate({
   nested: { whatthefuck: 'hello', innerArray: [''] }
 })
-console.log(validatorDeep)
+console.log(validatorDeep)*/
 
 /*const validatorShallow = new Validator(string)
 validatorShallow.validate('h')
