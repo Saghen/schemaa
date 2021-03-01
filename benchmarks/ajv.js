@@ -1,6 +1,8 @@
+const { Suite } = require('benchmark')
+const suite = new Suite()
+
 const config = require('./config')
-const { array, arraySimple, deepObject, shallowObject, generateShallowObject, largeObject } = require('./data')
-const { runFunctionManyTimes } = require('./helpers')
+const { array, arraySimple, arrayDeep, deepObject, shallowObject, generateShallowObject, largeObject } = require('./data')
 
 // TODO: Is it actually possible to beat AJV? And is it necessary at all lol
 const Ajv = require('ajv')
@@ -9,13 +11,10 @@ const Ajv = require('ajv')
 const shallowObjectValidator = new Ajv().compile({
   properties: generateShallowObject(config.shallowObject.count, { type: 'number' }),
 })
-runFunctionManyTimes(config.runCount, () => {
+
+suite.add('ajv - shallow object', () => {
   shallowObjectValidator(shallowObject)
 })
-
-console.time('ajv - shallow object')
-shallowObjectValidator(shallowObject)
-console.timeEnd('ajv - shallow object')
 
 // Deep Object
 function generateDeepSchemaAjv(levels) {
@@ -35,13 +34,10 @@ function generateDeepSchemaAjv(levels) {
 }
 
 const deepObjectValidator = new Ajv().compile(generateDeepSchemaAjv(config.deepObject.levels - 1))
-runFunctionManyTimes(config.runCount, () => {
+
+suite.add('ajv - deep object', () => {
   deepObjectValidator(deepObject)
 })
-
-console.time('ajv - deep object')
-deepObjectValidator(deepObject)
-console.timeEnd('ajv - deep object')
 
 // Large Object
 const largeObjectValidator = new Ajv().compile({
@@ -50,15 +46,26 @@ const largeObjectValidator = new Ajv().compile({
     generateDeepSchemaAjv(config.largeObject.levels - 1)
   ),
 })
-runFunctionManyTimes(config.runCount, () => {
+
+suite.add('ajv - large object', () => {
   largeObjectValidator(largeObject)
 })
 
-console.time('ajv - large object')
-largeObjectValidator(largeObject)
-console.timeEnd('ajv - large object')
-
 // Array
+const arrayDeepValidator = new Ajv().compile({
+  properties: {
+    array: {
+      type: 'array',
+      items: generateDeepSchemaAjv(config.deepObject.levels - 1),
+    },
+  },
+})
+
+suite.add('ajv - array deep', () => {
+  arrayDeepValidator(arrayDeep)
+})
+
+// Array deep
 const arrayValidator = new Ajv().compile({
   properties: {
     array: {
@@ -73,16 +80,12 @@ const arrayValidator = new Ajv().compile({
         },
       },
     },
-  }
+  },
 })
 
-runFunctionManyTimes(config.runCount, () => {
+suite.add('ajv - array', () => {
   arrayValidator(array)
 })
-
-console.time('ajv - array')
-arrayValidator(array)
-console.timeEnd('ajv - array')
 
 // Array Simple
 const arraySimpleValidator = new Ajv().compile({
@@ -96,10 +99,10 @@ const arraySimpleValidator = new Ajv().compile({
   },
 })
 
-runFunctionManyTimes(config.runCount, () => {
+suite.add('ajv - array simple', () => {
   arraySimpleValidator(arraySimple)
 })
 
-console.time('ajv - array simple')
-arraySimpleValidator(arraySimple)
-console.timeEnd('ajv - array simple')
+suite.on('cycle', (e) => console.log(String(e.target)))
+
+suite.run()

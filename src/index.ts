@@ -3,38 +3,76 @@ import {
   transpileSchema,
   ICompiledSchema,
   ITranspiledSchema,
+  ICompiledOptions,
 } from './compiler/compiler'
 import { FAILURE_REASONS, ValidationError, ValidationFailure } from './errors'
+import { areArraysEqual } from './helpers'
 import { Keys } from './symbols'
 import { IType } from './types/types'
+
+export interface ISchemaOptions {
+  strict: boolean
+  optional: boolean
+}
 
 export class Schema {
   compiledSchema: ICompiledSchema
   transpiledSchema: ITranspiledSchema
-  constructor(schema) {
+  options: ISchemaOptions
+  constructor(schema, { strict = true, optional = false }: Partial<ISchemaOptions> = {}) {
     this.transpiledSchema = transpileSchema(schema)
     this.compiledSchema = compileSchema(this.transpiledSchema)
+
+    const yo = {}
+
+    this.options = { strict, optional }
   }
   validate(props): true {
     const failures: ValidationFailure[] = []
 
-    if (typeof props !== 'object' || props === null) throw new ValidationError({
-      failures: [
-        new ValidationFailure({
-          value: props,
-          message: `Value is not of type object`,
-          path: [],
-          reason: FAILURE_REASONS.INVALID_TYPE,
-        }),
-      ],
-      message: `Failed validation`,
-    })
+    // Undefined/Optional Handling
+    if (typeof props !== 'object' || props === null) {
+      if (this.options.optional) return true
+      throw new ValidationError({
+        failures: [
+          new ValidationFailure({
+            value: props,
+            message: `Value is not of type object`,
+            path: [],
+            reason: FAILURE_REASONS.INVALID_TYPE,
+          }),
+        ],
+        message: `Failed validation`,
+      })
+    }
 
+    // Strict handling
+    if (
+      this.options.strict &&
+      Object.keys(props).some((key) => !this.compiledSchema.hasOwnProperty(key))
+    ) {
+      throw new ValidationError({
+        failures: Object.keys(props)
+          .filter((key) => !this.compiledSchema.hasOwnProperty(key))
+          .map(
+            (key) =>
+              new ValidationFailure({
+                value: props[key],
+                message: `Key is not on schema`,
+                path: [],
+                key,
+                reason: FAILURE_REASONS.INVALID,
+              })
+          ),
+        message: `Failed validation`,
+      })
+    }
+
+    // Check properties
     for (const key of this.compiledSchema[Keys]) {
       const prop = props[key]
       const compiledProperty = this.compiledSchema[key]
 
-      // Nested objects are passed as classes so we handle that here
       try {
         const validationResult = compiledProperty.type.validate(prop)
         if (!validationResult) {
@@ -61,6 +99,7 @@ export class Schema {
         throw err
       }
 
+      // Nested objects are passed as classes which cant have options so we skip the rest
       if (compiledProperty.type instanceof Schema) continue
 
       // Option validators

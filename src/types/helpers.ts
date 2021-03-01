@@ -1,4 +1,4 @@
-import { defaultGenerativeTypeFunctions, defaultOptions, defaultTypes, IOption, IType } from './types'
+import { defaultOptions, defaultTypes, IType } from './types'
 import { IsGenerativeType, IsType } from '../symbols'
 
 export function getType(type: any): IType | [IType] | undefined {

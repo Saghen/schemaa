@@ -6,7 +6,7 @@ import {
   defaultTypes,
   defaultGenerativeTypeFunctions,
 } from '../types/types'
-import { Keys, Sanitizers, PropertyName, Type, Validators, IsShallow } from '../symbols'
+import { Keys } from '../symbols'
 import { Schema } from '../index'
 
 import { getType, getTypeOptions, isType } from '../types/helpers'
@@ -122,7 +122,7 @@ export function compileProperty(key: string, property: ITranspiledProperty): ICo
   const typeOptions = getTypeOptions(type)
 
   for (const optionName of Object.keys(property.options)) {
-    if (optionName === 'type') continue
+    if (optionName === 'type' || optionName === 'optional') continue
 
     const option = typeOptions[optionName]
     if (!option)

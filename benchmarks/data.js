@@ -13,7 +13,7 @@ function generateDeepObject(levels, objToAdd = {}) {
 function generateShallowObject(count, valueToAdd) {
   let obj = {}
   for (let i = 0; i < count; i++) {
-    obj[i] = valueToAdd ?? i
+    obj[String(i)] = valueToAdd ?? i
   }
   return obj
 }
@@ -22,12 +22,20 @@ module.exports = {
   array: {
     array: new Array(config.array.count).fill(0).map((val, i) => ({ foo: `${i}` })),
   },
+  arrayDeep: {
+    array: new Array(config.array.count)
+      .fill(0)
+      .map(() => generateDeepObject(config.deepObject.levels)),
+  },
   arraySimple: {
     array: new Array(config.array.count).fill('123'),
   },
   deepObject: generateDeepObject(config.deepObject.levels),
   shallowObject: generateShallowObject(config.shallowObject.count),
-  largeObject: generateShallowObject(config.shallowObject.count, generateDeepObject(config.deepObject.levels)),
+  largeObject: generateShallowObject(
+    config.largeObject.count,
+    generateDeepObject(config.largeObject.levels)
+  ),
   generateDeepObject,
   generateShallowObject,
 }

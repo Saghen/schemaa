@@ -1,7 +1,7 @@
 module.exports = {
-  array: { count: 500 },
-  deepObject: { levels: 500 },
-  shallowObject: { count: 1000 },
+  array: { count: 900 },
+  deepObject: { levels: 100 },
+  shallowObject: { count: 500 },
   largeObject: { levels: 100, count: 100 },
-  runCount: 100,
+  runCount: 100
 }

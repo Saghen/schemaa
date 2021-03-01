@@ -1,66 +1,68 @@
-const { Validator, string, boolean, number, bigInt, func } = require('../src/index')
-const config = require('./config')
-const { runFunctionManyTimes } = require('./helpers')
+const { Suite } = require('benchmark')
+const suite = new Suite()
 
-const { array, arraySimple, deepObject, generateDeepObject, shallowObject, generateShallowObject, largeObject } = require('./data')
+const { Schema } = require('../dist')
+const config = require('./config')
+
+const {
+  array,
+  arraySimple,
+  deepObject,
+  generateDeepObject,
+  shallowObject,
+  generateShallowObject,
+  largeObject,
+  arrayDeep,
+} = require('./data')
 
 // Shallow Object
-const validatorShallowObject = new Validator(generateShallowObject(config.shallowObject.count, number))
+const validatorShallowObject = new Schema(generateShallowObject(config.shallowObject.count, Number))
 
-runFunctionManyTimes(config.runCount, () => {
+suite.add('schemaa - shallow object', () => {
   validatorShallowObject.validate(shallowObject)
 })
 
-console.time('schemaa - shallow object')
-validatorShallowObject.validate(shallowObject)
-console.timeEnd('schemaa - shallow object')
-
 // Deep Object
-const validatorDeepObject = new Validator(generateDeepObject(config.deepObject.levels))
+const validatorDeepObject = new Schema(generateDeepObject(config.deepObject.levels))
 
-runFunctionManyTimes(config.runCount, () => {
+suite.add('schemaa - deep object', () => {
   validatorDeepObject.validate(deepObject)
 })
 
-console.time('schemaa - deep object')
-validatorDeepObject.validate(deepObject)
-console.timeEnd('schemaa - deep object')
-
 // Large Object
-const validatorLargeObject = new Validator(
+const validatorLargeObject = new Schema(
   generateShallowObject(config.largeObject.count, generateDeepObject(config.largeObject.levels))
 )
 
-runFunctionManyTimes(config.runCount, () => {
+suite.add('schemaa - large object', () => {
   validatorLargeObject.validate(largeObject)
 })
 
-console.time('schemaa - large object')
-validatorLargeObject.validate(largeObject)
-console.timeEnd('schemaa - large object')
-
-// Array
-const validatorArray = new Validator({
-  array: [{ foo: { type: string } }],
+// Array Deep
+const validatorArrayDeep = new Schema({
+  array: [generateDeepObject(config.deepObject.levels)],
 })
 
-runFunctionManyTimes(config.runCount, () => {
+suite.add('schemaa - array deep', () => {
+  validatorArrayDeep.validate(arrayDeep)
+})
+
+// Array
+const validatorArray = new Schema({
+  array: [{ foo: { type: String } }],
+})
+
+suite.add('schemaa - array', () => {
   validatorArray.validate(array)
 })
 
-console.time('schemaa - array')
-validatorArray.validate(array)
-console.timeEnd('schemaa - array')
-
 // Array Simple
-const validatorArraySimple = new Validator({
-  array: [string],
+const validatorArraySimple = new Schema({
+  array: [String],
 })
 
-runFunctionManyTimes(config.runCount, () => {
-  validatorArraySimple.validate(arraySimple)
-})
+suite.add('schemaa - array simple', () => validatorArraySimple.validate(arraySimple))
 
-console.time('schemaa - array simple')
-validatorArraySimple.validate(arraySimple)
-console.timeEnd('schemaa - array simple')
+suite.on('cycle', e => console.log(String(e.target)))
+
+suite.run()
